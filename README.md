@@ -71,7 +71,7 @@ Por último incluímos nuestra biblioteca *FunctionThreadPool.hpp* que se tiene 
 Pasamos ahora a la definición de la clase que contiene todos los parámetros:
 
 ```cpp
-struct Parametres {
+struct Parameters {
   int x;
   int y;
 };
