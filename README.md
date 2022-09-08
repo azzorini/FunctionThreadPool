@@ -72,6 +72,6 @@ Pasamos ahora a la definición de la clase que contiene todos los parámetros:
 
 ```cpp
 struct Parameters {
-  int x;
-  int y;
+	int x;
+	int y;
 };
