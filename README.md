@@ -197,7 +197,7 @@ En nuestra función ahora en lugar de usar `std::cout` usamos la salida que tene
 std::osyncstream out{*p.out};
 ```
 
-Por último dentro del `main` creamos un objeto `std::ofstream` en el que queremos que todas las funciones muestren su salida y por último a la hora de enviar los parámetros a la cola de trabajo añadimos la referencia a dicho objeto:
+Por último dentro del `main` creamos un objeto `std::ofstream` en el que queremos que todas las funciones muestren su salida y para acabar a la hora de enviar los parámetros a la cola de trabajo añadimos la referencia a dicho objeto:
 
 ```cpp
 for (unsigned i = 1; i < 21; i++) Pool.submit(Parameters(i, i+1, &fout));
