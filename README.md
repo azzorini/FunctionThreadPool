@@ -75,3 +75,30 @@ struct Parameters {
 	int x;
 	int y;
 };
+```
+En este caso se ha hecho todo lo sencilla que podría ser, formada solo por dos enteros. Pero puede ser todo lo complicada que queramos, en un caso más realista tendría varios parámetros de diferentes tipos entre los cuales por ejemplo también se podría incluir la salida a un fichero para no usar la salida por pantalla como se hace en el ejemplo. Lo importante es que esta clase tenga **todo** lo que nuestra función necesite para ejecutarse.
+
+Aclarado esto vayamos ahora a la definición de la función:
+
+´´´cpp
+void funcion(const Parameters& p) {
+	std::this_thread::sleep_for(std::chrono::seconds(1)); // Running, calculating, thinking...
+	std::osyncstream out{std::cout};
+	out << p.x*p.x + p.y*p.y << '\n';
+}
+´´´
+
+Esta función tiene bastante libertad pero ha de cumplir dos requisitos:
+
+1. La función no puede devolver nada, es decir, tiene que ser `void`.
+2. La función tiene que recibir un solo input que ha de ser `const Parameters&`.
+
+Dentro de eso el resto de la función es completamente libre. Aunque al no poder devolver nada lo lógico es que la salida se haga por pantalla o a un fichero. Es importante resaltar que la thread pool no se encargará de sincronizar la salida de las funciones. Por lo tanto si varias de nuestras funciones comparten salida es importante que sea la propia función quien garantice que no haya problemas. En este ejemplo simple esto se consigue utilizando la biblioteca `syncstream` incluída en el estándar de C++20. En caso de no querer usarla o de estar usando un estándar anterior se tendrá que hacer manualmente. La primera línea de la función es algo que en un caso realista no se quiere poner y simplemente pretende simular que la función está trabajando durante un tiempo.
+
+Para acabar romperemos en diferentes partes el `main`. En primer lugar se construye nuestra pool:
+
+```cpp
+function_thread_pool<Parameters> Pool(funcion);
+```
+
+Esta clase se trata de una plantilla, la clase que tenemos que poner en la plantilla es la que hemos definido más arriba que tiene todos los parámetros necesarios para que se ejecute nuestra función de ahí viene que en el ejemplo se ponga `function_thread_pool<Parameters>`. Respecto a los argumentos que recibe el constructor hay uno obligatorio que es nuestra función y otro opcional que es el tamaño de la pool. Si no se le pasa el tamaño de la pool este será el dado por `std::thread::hardware_concurrency()` que se corresponde con la capacidad que tiene el ordenador de ejecutar tareas en paralelo. Hay que tener cuidado porque esta función no tiene en cuenta otras limitaciones como podría ser la memoria, en caso de que ese sea nuestro factor limitante tendremos que configurar el tamaño de la pool manualmente pasando ese segundo par
