@@ -82,13 +82,13 @@ En este caso se ha hecho todo lo sencilla que podría ser, formada solo por dos 
 
 Aclarado esto vayamos ahora a la definición de la función:
 
-´´´cpp
+```cpp
 void funcion(const Parameters& p) {
 	std::this_thread::sleep_for(std::chrono::seconds(1)); // Running, calculating, thinking...
 	std::osyncstream out{std::cout};
 	out << p.x*p.x + p.y*p.y << '\n';
 }
-´´´
+```
 
 Esta función tiene bastante libertad pero ha de cumplir dos requisitos:
 
