@@ -137,3 +137,72 @@ Recibe una configuración de parámetros de la clase con la que hayamos creado l
 
 Espera hasta que la cola de trabajos se haya vaciado para continuar la ejecución. Pensado para ejecutarlo después de haber mandado todos los parámetros con los que queremos que la función se ejecute. Cabe destacar que la espera se hace mediante una condition_variable y por lo tanto no se hace un *busy waiting* esta condition_variable manda una notificación cada vez que un hilo empieza a ejecutarse.
 
+## Consejos
+
+Como se comentaba en el ejemplo añadir una salida por fichero a nuestra clase de parámetros no es tan trivial como podría parecer a primera vista ya que hay que respetar que el constructor de la clase tiene que poder llamarse sin parámetros y además en la función se manda como `const Parameters&` evitando que se pueda modificar. La solución más sencilla que he podido encontrar es añadir a nuestra clase un puntero a un objeto `std::ofstream`. De esta forma el código del ejemplo quedaría de la siguiente forma:
+
+```cpp
+#include <iostream>
+#include <fstream>
+#include <chrono>
+#include <syncstream>
+
+#include "FunctionThreadPool.hpp"
+
+// Creamos nuestra clase que servirá para pasar todos los parámetros que necesite nuestra función
+struct Parameters {
+        int x;
+        int y;
+        std::ofstream* out; // Añadimos un puntero a un objeto ofstream para salida por fichero
+};
+
+// Esta es la función que queremos usar es importante que sea void y que por lo tanto todo su output vaya por pantalla o a ficheros
+// además ha de recibir un solo input que sea una referencia constante a un objeto de la clase que hayamos creado
+void funcion(const Parameters& p) {
+        std::this_thread::sleep_for(std::chrono::seconds(1)); // Running, calculating, thinking...
+        std::osyncstream out{*p.out}; // Usamos ahora la salida que tenemos en nuestros parámetros
+        out << p.x*p.x + p.y*p.y << '\n';
+}
+
+int main() {
+        std::ofstream fout("salida_pool.txt"); // Creamos nuestro fichero de salida
+
+        // Creamos el objeto en este caso solo le hemos pasado la función así que el número de hilos que tomará vendrá dado por
+        // std::thread::hardware_concurrency()
+        function_thread_pool<Parameters> Pool(funcion);
+
+        // Enviamos todos los parámetros con los que queremos que la función se ejecute
+        for (unsigned i = 1; i < 21; i++) Pool.submit(Parameters(i, i+1, &fout));
+
+        // Esperamos hasta que la cola de parámetros con los que se tiene que ejecutar la función se vacíe
+        Pool.wait();
+
+        return 0;
+}
+```
+
+Donde ahora por supuesto hemos incluído la biblioteca `fstream` para trabajar con ficheros, le hemos añadido a nuestra clase un atributo `std::ofstream*` quedando esta de la siguiente forma:
+
+```cpp
+struct Parameters {
+	int x;
+	int y;
+	std::ofstream* out;
+};
+```
+
+En nuestra función ahora en lugar de usar `std::cout` usamos la salida que tenemos en nuestra clase:
+
+```cpp
+std::osyncstream out{*p.out};
+```
+
+Por último dentro del `main` creamos un objeto `std::ofstream` en el que queremos que todas las funciones muestren su salida y por último a la hora de enviar los parámetros a la cola de trabajo añadimos la referencia a dicho objeto:
+
+```cpp
+for (unsigned i = 1; i < 21; i++) Pool.submit(Parameters(i, i+1, &fout));
+```
+
+## Reconocimientos
+
+El conocimiento, las ideas y una parte significativa del código que contiene esta biblioteca no hubieran sido posibles sin la previa lectura de *C++ Concurrency in Action: Practical Multithreading* de Anthony Williams.
